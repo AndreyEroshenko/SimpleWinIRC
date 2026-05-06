@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "SimpleWinIRC (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "SimpleWinIRC (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
