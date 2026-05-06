@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Input;
 
 namespace SimpleWinIRC
 {
@@ -75,6 +76,8 @@ namespace SimpleWinIRC
                 _isConnected = true;
                 ConnectButton.Content = "Disconnect";
                 ConnectButton.IsEnabled = true;
+                InputTextBox.IsEnabled = true;
+                SendButton.IsEnabled = true;
                 SetStatus($"Connected to {server}:{port}.");
 
                 await SendAsync($"NICK {nickname}");
@@ -120,6 +123,8 @@ namespace SimpleWinIRC
                     {
                         _isConnected = false;
                         ConnectButton.Content = "Connect";
+                        InputTextBox.IsEnabled = false;
+                        SendButton.IsEnabled = false;
                         SetStatus("Disconnected.");
                     }
                 });
@@ -167,8 +172,33 @@ namespace SimpleWinIRC
                 {
                     ConnectButton.Content = "Connect";
                     ConnectButton.IsEnabled = true;
+                    InputTextBox.IsEnabled = false;
+                    SendButton.IsEnabled = false;
                 });
             }
+        }
+
+        private async void SendButton_Click(object sender, RoutedEventArgs e)
+        {
+            await SendInputAsync();
+        }
+
+        private async void InputTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Enter)
+            {
+                e.Handled = true;
+                await SendInputAsync();
+            }
+        }
+
+        private async Task SendInputAsync()
+        {
+            if (!_isConnected) return;
+            var line = InputTextBox.Text?.Trim() ?? string.Empty;
+            if (line.Length == 0) return;
+            InputTextBox.Text = string.Empty;
+            await SendAsync(line);
         }
 
         private void AppendLine(string line)

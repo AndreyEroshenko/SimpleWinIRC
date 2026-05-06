@@ -18,6 +18,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" ColumnSpacing="12">
@@ -28,8 +29,8 @@
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBox Grid.Column="0" x:Name="ServerTextBox" Header="Server" Text="irc.libera.chat" />
-            <NumberBox Grid.Column="1" x:Name="PortNumberBox" Header="Port" Value="6697" Minimum="1" Maximum="65535" SpinButtonPlacementMode="Compact" />
+            <TextBox Grid.Column="0" x:Name="ServerTextBox" Header="Server" Text="irc.irchighway.net" />
+            <NumberBox Grid.Column="1" x:Name="PortNumberBox" Header="Port" Value="9999" Minimum="1" Maximum="65535" SpinButtonPlacementMode="Compact" />
             <TextBox Grid.Column="2" x:Name="NicknameTextBox" Header="Nickname" PlaceholderText="your_nick" />
             <CheckBox Grid.Column="3" x:Name="UseSslCheckBox" Content="SSL" IsChecked="True" VerticalAlignment="Bottom" Margin="0,0,0,6" />
             <Button Grid.Column="4" x:Name="ConnectButton" Content="Connect" Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Bottom" Click="ConnectButton_Click" />
@@ -41,6 +42,15 @@
             </ScrollViewer>
         </Border>
 
-        <TextBlock Grid.Row="2" x:Name="StatusTextBlock" Text="Not connected." Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        <Grid Grid.Row="2" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" x:Name="InputTextBox" PlaceholderText="Type an IRC command, e.g. JOIN #channel, PRIVMSG #channel :hi" IsEnabled="False" KeyDown="InputTextBox_KeyDown" />
+            <Button Grid.Column="1" x:Name="SendButton" Content="Send" IsEnabled="False" Click="SendButton_Click" />
+        </Grid>
+
+        <TextBlock Grid.Row="3" x:Name="StatusTextBlock" Text="Not connected." Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
     </Grid>
 </Window>
