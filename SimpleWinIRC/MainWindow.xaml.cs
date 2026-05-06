@@ -41,6 +41,7 @@ namespace SimpleWinIRC
             var port = (int)PortNumberBox.Value;
             var nickname = NicknameTextBox.Text?.Trim() ?? string.Empty;
             var useSsl = UseSslCheckBox.IsChecked == true;
+            var ignoreCert = IgnoreCertCheckBox.IsChecked == true;
 
             if (string.IsNullOrEmpty(server) || string.IsNullOrEmpty(nickname))
             {
@@ -60,7 +61,10 @@ namespace SimpleWinIRC
                 Stream networkStream = _tcpClient.GetStream();
                 if (useSsl)
                 {
-                    var ssl = new SslStream(networkStream, leaveInnerStreamOpen: false);
+                    RemoteCertificateValidationCallback? validate = ignoreCert
+                        ? (_, _, _, _) => true
+                        : null;
+                    var ssl = new SslStream(networkStream, leaveInnerStreamOpen: false, validate);
                     await ssl.AuthenticateAsClientAsync(new SslClientAuthenticationOptions
                     {
                         TargetHost = server,

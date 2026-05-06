@@ -32,7 +32,10 @@
             <TextBox Grid.Column="0" x:Name="ServerTextBox" Header="Server" Text="irc.irchighway.net" />
             <NumberBox Grid.Column="1" x:Name="PortNumberBox" Header="Port" Value="9999" Minimum="1" Maximum="65535" SpinButtonPlacementMode="Compact" />
             <TextBox Grid.Column="2" x:Name="NicknameTextBox" Header="Nickname" PlaceholderText="your_nick" />
-            <CheckBox Grid.Column="3" x:Name="UseSslCheckBox" Content="SSL" IsChecked="True" VerticalAlignment="Bottom" Margin="0,0,0,6" />
+            <StackPanel Grid.Column="3" Orientation="Vertical" VerticalAlignment="Bottom" Margin="0,0,0,4">
+                <CheckBox x:Name="UseSslCheckBox" Content="SSL" IsChecked="True" />
+                <CheckBox x:Name="IgnoreCertCheckBox" Content="Ignore cert errors" />
+            </StackPanel>
             <Button Grid.Column="4" x:Name="ConnectButton" Content="Connect" Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Bottom" Click="ConnectButton_Click" />
         </Grid>
 
