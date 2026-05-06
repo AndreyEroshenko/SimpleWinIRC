@@ -13,21 +13,34 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <Grid Padding="24">
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" MinWidth="320">
-            <TextBlock Text="Connect to IRC" Style="{StaticResource SubtitleTextBlockStyle}" />
+    <Grid Padding="16" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
-            <TextBox x:Name="ServerTextBox" Header="Server" PlaceholderText="irc.libera.chat" Text="irc.libera.chat" />
+        <Grid Grid.Row="0" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" x:Name="ServerTextBox" Header="Server" Text="irc.libera.chat" />
+            <NumberBox Grid.Column="1" x:Name="PortNumberBox" Header="Port" Value="6697" Minimum="1" Maximum="65535" SpinButtonPlacementMode="Compact" />
+            <TextBox Grid.Column="2" x:Name="NicknameTextBox" Header="Nickname" PlaceholderText="your_nick" />
+            <CheckBox Grid.Column="3" x:Name="UseSslCheckBox" Content="SSL" IsChecked="True" VerticalAlignment="Bottom" Margin="0,0,0,6" />
+            <Button Grid.Column="4" x:Name="ConnectButton" Content="Connect" Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Bottom" Click="ConnectButton_Click" />
+        </Grid>
 
-            <NumberBox x:Name="PortNumberBox" Header="Port" Value="6697" Minimum="1" Maximum="65535" SpinButtonPlacementMode="Compact" />
+        <Border Grid.Row="1" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" CornerRadius="4" Background="{ThemeResource LayerFillColorDefaultBrush}">
+            <ScrollViewer x:Name="OutputScrollViewer" VerticalScrollBarVisibility="Auto" Padding="8">
+                <TextBlock x:Name="OutputTextBlock" FontFamily="Consolas" FontSize="12" TextWrapping="Wrap" IsTextSelectionEnabled="True" />
+            </ScrollViewer>
+        </Border>
 
-            <TextBox x:Name="NicknameTextBox" Header="Nickname" PlaceholderText="your_nick" />
-
-            <CheckBox x:Name="UseSslCheckBox" Content="Use SSL/TLS" IsChecked="True" />
-
-            <Button x:Name="ConnectButton" Content="Connect" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Stretch" Click="ConnectButton_Click" />
-
-            <TextBlock x:Name="StatusTextBlock" Text="Not connected." Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-        </StackPanel>
+        <TextBlock Grid.Row="2" x:Name="StatusTextBlock" Text="Not connected." Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
     </Grid>
 </Window>
