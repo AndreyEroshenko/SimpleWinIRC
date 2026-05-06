@@ -13,7 +13,21 @@
         <MicaBackdrop />
     </Window.SystemBackdrop>
 
-    <Grid>
+    <Grid Padding="24">
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12" MinWidth="320">
+            <TextBlock Text="Connect to IRC" Style="{StaticResource SubtitleTextBlockStyle}" />
 
+            <TextBox x:Name="ServerTextBox" Header="Server" PlaceholderText="irc.libera.chat" Text="irc.libera.chat" />
+
+            <NumberBox x:Name="PortNumberBox" Header="Port" Value="6697" Minimum="1" Maximum="65535" SpinButtonPlacementMode="Compact" />
+
+            <TextBox x:Name="NicknameTextBox" Header="Nickname" PlaceholderText="your_nick" />
+
+            <CheckBox x:Name="UseSslCheckBox" Content="Use SSL/TLS" IsChecked="True" />
+
+            <Button x:Name="ConnectButton" Content="Connect" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Stretch" Click="ConnectButton_Click" />
+
+            <TextBlock x:Name="StatusTextBlock" Text="Not connected." Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
     </Grid>
 </Window>
