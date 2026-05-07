@@ -104,11 +104,13 @@ namespace SimpleWinIRC
                     PortNumberBox.Value = 9999;
                     UseSslCheckBox.IsChecked = true;
                     IgnoreCertCheckBox.IsChecked = true;
+                    ChannelTextBox.Text = "#ebooks";
                     break;
                 case "irc.undernet.org":
                     PortNumberBox.Value = 6667;
                     UseSslCheckBox.IsChecked = false;
                     IgnoreCertCheckBox.IsChecked = false;
+                    ChannelTextBox.Text = "#Bookz";
                     break;
             }
         }
