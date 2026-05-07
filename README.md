@@ -18,10 +18,22 @@ Deliberately not implemented (and unlikely to be added unless actually needed): 
 
 ## Build
 
-Open the solution in Visual Studio 2022 (with the Windows App SDK workload) or run:
+Open the solution in Visual Studio 2022 (with the Windows App SDK workload), or build from the command line. The project is an unpackaged WinUI 3 desktop app targeting `net8.0-windows10.0.19041.0`, x64.
+
+**Debug build** — small, fast, depends on the Windows App Runtime being installed on the dev machine:
 
 ```
-dotnet build SimpleWinIRC/SimpleWinIRC.csproj
+dotnet build SimpleWinIRC/SimpleWinIRC.csproj -c Debug -p:Platform=x64
 ```
 
-The project is an unpackaged WinUI 3 desktop app targeting `net8.0-windows10.0.19041.0`.
+Output: `SimpleWinIRC/bin/x64/Debug/net8.0-windows10.0.19041.0/win-x64/` (~108 MB, ~235 files).
+
+**Release build** — fully self-contained for distribution; bundles both the .NET 8 runtime and the Windows App SDK runtime, so the target machine needs nothing pre-installed beyond Windows itself:
+
+```
+dotnet build SimpleWinIRC/SimpleWinIRC.csproj -c Release -p:Platform=x64
+```
+
+Output: `SimpleWinIRC/bin/x64/Release/net8.0-windows10.0.19041.0/win-x64/` (~207 MB, ~512 files). Copy that folder (drop `*.pdb` if you want to save ~50 KB) onto another x64 Windows 10 1809+ machine and run `SimpleWinIRC.exe` directly — no installer, no runtime install.
+
+The self-contained switches (`WindowsAppSDKSelfContained`, `SelfContained`) are conditional on `Configuration=Release` in the csproj, so Debug builds stay lean for fast dev iteration.

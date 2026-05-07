@@ -11,6 +11,8 @@
     <UseWinUI>true</UseWinUI>
     <EnableMsixTooling>true</EnableMsixTooling>
     <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained Condition="'$(Configuration)' == 'Release'">true</WindowsAppSDKSelfContained>
+    <SelfContained Condition="'$(Configuration)' == 'Release'">true</SelfContained>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
