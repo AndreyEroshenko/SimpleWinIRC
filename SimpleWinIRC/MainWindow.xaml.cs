@@ -4,6 +4,7 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Dispatching;
@@ -28,7 +29,55 @@ namespace SimpleWinIRC
             InitializeComponent();
             _dispatcher = DispatcherQueue.GetForCurrentThread();
             ServerComboBox.SelectedIndex = 0;
-            Closed += (_, _) => _ = DisconnectAsync();
+
+            var settings = LoadSettings();
+            if (!string.IsNullOrEmpty(settings.Nickname))
+                NicknameTextBox.Text = settings.Nickname;
+
+            Closed += (_, _) =>
+            {
+                SaveSettings();
+                _ = DisconnectAsync();
+            };
+        }
+
+        private sealed class AppSettings
+        {
+            public string? Nickname { get; set; }
+        }
+
+        private static string GetSettingsPath()
+        {
+            var dir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "SimpleWinIRC");
+            return Path.Combine(dir, "settings.json");
+        }
+
+        private static AppSettings LoadSettings()
+        {
+            try
+            {
+                var path = GetSettingsPath();
+                if (!File.Exists(path)) return new AppSettings();
+                return JsonSerializer.Deserialize<AppSettings>(File.ReadAllText(path)) ?? new AppSettings();
+            }
+            catch
+            {
+                return new AppSettings();
+            }
+        }
+
+        private void SaveSettings()
+        {
+            try
+            {
+                var path = GetSettingsPath();
+                Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+                var settings = new AppSettings { Nickname = NicknameTextBox.Text?.Trim() };
+                File.WriteAllText(path, JsonSerializer.Serialize(settings));
+            }
+            catch { }
         }
 
         private void AdvancedOptionsCheckBox_Toggle(object sender, RoutedEventArgs e)
