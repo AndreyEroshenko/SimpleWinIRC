@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -24,6 +25,7 @@ namespace SimpleWinIRC
         private CancellationTokenSource? _cts;
         private bool _isConnected;
         private string? _currentChannel;
+        private string? _currentNickname;
 
         public MainWindow()
         {
@@ -174,6 +176,7 @@ namespace SimpleWinIRC
                 _writer = new StreamWriter(_stream, encoding) { NewLine = "\r\n", AutoFlush = true };
 
                 _isConnected = true;
+                _currentNickname = nickname;
                 ConnectButton.Content = "Disconnect";
                 ConnectButton.IsEnabled = true;
                 InputTextBox.IsEnabled = true;
@@ -212,7 +215,10 @@ namespace SimpleWinIRC
                     {
                         var payload = line.Substring(5);
                         await SendAsync($"PONG {payload}");
+                        continue;
                     }
+
+                    TryHandleDccSend(line);
                 }
             }
             catch (OperationCanceledException) { }
@@ -228,6 +234,7 @@ namespace SimpleWinIRC
                     {
                         _isConnected = false;
                         _currentChannel = null;
+                        _currentNickname = null;
                         ConnectButton.Content = "Connect";
                         InputTextBox.IsEnabled = false;
                         InputTextBox.PlaceholderText = string.Empty;
@@ -281,6 +288,7 @@ namespace SimpleWinIRC
                 _cts = null;
                 _isConnected = false;
                 _currentChannel = null;
+                _currentNickname = null;
                 _dispatcher.TryEnqueue(() =>
                 {
                     ConnectButton.Content = "Connect";
@@ -348,6 +356,149 @@ namespace SimpleWinIRC
             await SendAsync($"JOIN {channel}");
             _currentChannel = channel;
             InputTextBox.PlaceholderText = $"Message {channel}";
+        }
+
+        private void TryHandleDccSend(string line)
+        {
+            if (line.Length < 2 || line[0] != ':') return;
+            var sp1 = line.IndexOf(' ');
+            if (sp1 < 1) return;
+            var prefix = line.Substring(1, sp1 - 1);
+            var rest1 = line.Substring(sp1 + 1);
+            const string privmsg = "PRIVMSG ";
+            if (!rest1.StartsWith(privmsg, StringComparison.Ordinal)) return;
+            var rest2 = rest1.Substring(privmsg.Length);
+            var sp2 = rest2.IndexOf(' ');
+            if (sp2 < 1) return;
+            var target = rest2.Substring(0, sp2);
+            var rest3 = rest2.Substring(sp2 + 1);
+            if (rest3.Length < 2 || rest3[0] != ':') return;
+            var body = rest3.Substring(1);
+
+            if (string.IsNullOrEmpty(_currentNickname) ||
+                !string.Equals(target, _currentNickname, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            if (body.Length < 2 || body[0] != '\x01' || body[^1] != '\x01') return;
+            var inner = body.Substring(1, body.Length - 2);
+
+            var parsed = TryParseDccSend(inner);
+            if (parsed == null) return;
+
+            var sender = prefix.Split('!', 2)[0];
+            var (filename, ip, port, size) = parsed.Value;
+            var ipStr = IpFromUint(ip);
+
+            _dispatcher.TryEnqueue(async () =>
+            {
+                try
+                {
+                    await HandleIncomingDccSendAsync(sender, filename, ipStr, port, size);
+                }
+                catch (Exception ex)
+                {
+                    AppendLine($"[dcc error] {ex.Message}");
+                }
+            });
+        }
+
+        private static (string filename, uint ip, int port, long size)? TryParseDccSend(string inner)
+        {
+            const string prefix = "DCC SEND ";
+            if (!inner.StartsWith(prefix, StringComparison.Ordinal)) return null;
+            var rest = inner.Substring(prefix.Length);
+            string filename;
+            if (rest.Length > 0 && rest[0] == '"')
+            {
+                var end = rest.IndexOf('"', 1);
+                if (end < 0) return null;
+                filename = rest.Substring(1, end - 1);
+                rest = rest.Substring(end + 1).TrimStart();
+            }
+            else
+            {
+                var sp = rest.IndexOf(' ');
+                if (sp < 0) return null;
+                filename = rest.Substring(0, sp);
+                rest = rest.Substring(sp + 1);
+            }
+            var parts = rest.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length < 3) return null;
+            if (!uint.TryParse(parts[0], out var ip)) return null;
+            if (!int.TryParse(parts[1], out var port) || port <= 0 || port > 65535) return null;
+            if (!long.TryParse(parts[2], out var size) || size < 0) return null;
+            return (filename, ip, port, size);
+        }
+
+        private static string IpFromUint(uint ip) =>
+            $"{(ip >> 24) & 0xFF}.{(ip >> 16) & 0xFF}.{(ip >> 8) & 0xFF}.{ip & 0xFF}";
+
+        private async Task HandleIncomingDccSendAsync(string sender, string filename, string ip, int port, long size)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Incoming file (DCC)",
+                Content = $"{sender} is offering:\n\n{filename}\n{size:N0} bytes\nfrom {ip}:{port}",
+                PrimaryButtonText = "Accept",
+                CloseButtonText = "Decline",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = Content.XamlRoot,
+            };
+            var result = await dialog.ShowAsync();
+            if (result != ContentDialogResult.Primary) return;
+
+            var picker = new Windows.Storage.Pickers.FileSavePicker();
+            var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(this);
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+            picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.Downloads;
+            picker.SuggestedFileName = filename;
+            var ext = Path.GetExtension(filename);
+            if (string.IsNullOrEmpty(ext)) ext = ".bin";
+            picker.FileTypeChoices.Add("File", new List<string> { ext });
+            var file = await picker.PickSaveFileAsync();
+            if (file == null) return;
+
+            _ = Task.Run(() => DownloadDccFileAsync(file.Path, ip, port, size, filename));
+        }
+
+        private async Task DownloadDccFileAsync(string savePath, string ip, int port, long expectedSize, string displayName)
+        {
+            AppendLine($"[dcc] starting {displayName} ({expectedSize:N0} bytes) from {ip}:{port}");
+            try
+            {
+                using var client = new TcpClient();
+                await client.ConnectAsync(ip, port);
+                using var net = client.GetStream();
+                using var file = File.Create(savePath);
+                var buf = new byte[8192];
+                var ack = new byte[4];
+                long total = 0;
+                long lastReportedKb = 0;
+                while (total < expectedSize)
+                {
+                    var read = await net.ReadAsync(buf, 0, buf.Length);
+                    if (read == 0) break;
+                    await file.WriteAsync(buf, 0, read);
+                    total += read;
+                    ack[0] = (byte)((total >> 24) & 0xFF);
+                    ack[1] = (byte)((total >> 16) & 0xFF);
+                    ack[2] = (byte)((total >> 8) & 0xFF);
+                    ack[3] = (byte)(total & 0xFF);
+                    try { await net.WriteAsync(ack, 0, 4); } catch { }
+
+                    var kb = total / 1024;
+                    if (kb - lastReportedKb >= 64)
+                    {
+                        lastReportedKb = kb;
+                        AppendLine($"[dcc] {displayName}: {total:N0} / {expectedSize:N0} bytes");
+                    }
+                }
+                AppendLine($"[dcc] complete: {displayName} -> {savePath} ({total:N0} bytes)");
+            }
+            catch (Exception ex)
+            {
+                AppendLine($"[dcc error] {displayName}: {ex.Message}");
+            }
         }
 
         private void AppendLine(string line)
