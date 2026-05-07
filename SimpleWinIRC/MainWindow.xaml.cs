@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 
 namespace SimpleWinIRC
@@ -29,6 +30,21 @@ namespace SimpleWinIRC
             Closed += (_, _) => _ = DisconnectAsync();
         }
 
+        private void ServerComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            switch (ServerComboBox.SelectedItem as string)
+            {
+                case "irc.irchighway.net":
+                    PortNumberBox.Value = 9999;
+                    UseSslCheckBox.IsChecked = true;
+                    break;
+                case "irc.undernet.org":
+                    PortNumberBox.Value = 6667;
+                    UseSslCheckBox.IsChecked = false;
+                    break;
+            }
+        }
+
         private async void ConnectButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isConnected)
@@ -37,7 +53,7 @@ namespace SimpleWinIRC
                 return;
             }
 
-            var server = ServerTextBox.Text?.Trim() ?? string.Empty;
+            var server = ServerComboBox.Text?.Trim() ?? string.Empty;
             var port = (int)PortNumberBox.Value;
             var nickname = NicknameTextBox.Text?.Trim() ?? string.Empty;
             var useSsl = UseSslCheckBox.IsChecked == true;
@@ -82,6 +98,8 @@ namespace SimpleWinIRC
                 ConnectButton.IsEnabled = true;
                 InputTextBox.IsEnabled = true;
                 SendButton.IsEnabled = true;
+                ChannelTextBox.IsEnabled = true;
+                JoinButton.IsEnabled = true;
                 SetStatus($"Connected to {server}:{port}.");
 
                 await SendAsync($"NICK {nickname}");
@@ -129,6 +147,8 @@ namespace SimpleWinIRC
                         ConnectButton.Content = "Connect";
                         InputTextBox.IsEnabled = false;
                         SendButton.IsEnabled = false;
+                        ChannelTextBox.IsEnabled = false;
+                        JoinButton.IsEnabled = false;
                         SetStatus("Disconnected.");
                     }
                 });
@@ -178,6 +198,8 @@ namespace SimpleWinIRC
                     ConnectButton.IsEnabled = true;
                     InputTextBox.IsEnabled = false;
                     SendButton.IsEnabled = false;
+                    ChannelTextBox.IsEnabled = false;
+                    JoinButton.IsEnabled = false;
                 });
             }
         }
@@ -203,6 +225,31 @@ namespace SimpleWinIRC
             if (line.Length == 0) return;
             InputTextBox.Text = string.Empty;
             await SendAsync(line);
+        }
+
+        private async void JoinButton_Click(object sender, RoutedEventArgs e)
+        {
+            await JoinChannelAsync();
+        }
+
+        private async void ChannelTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Enter)
+            {
+                e.Handled = true;
+                await JoinChannelAsync();
+            }
+        }
+
+        private async Task JoinChannelAsync()
+        {
+            if (!_isConnected) return;
+            var channel = ChannelTextBox.Text?.Trim() ?? string.Empty;
+            if (channel.Length == 0) return;
+            if (channel[0] != '#' && channel[0] != '&' && channel[0] != '+' && channel[0] != '!')
+                channel = "#" + channel;
+            ChannelTextBox.Text = string.Empty;
+            await SendAsync($"JOIN {channel}");
         }
 
         private void AppendLine(string line)
