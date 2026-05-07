@@ -65,7 +65,7 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBox Grid.Column="0" x:Name="InputTextBox" PlaceholderText="Type an IRC command, e.g. JOIN #channel, PRIVMSG #channel :hi" IsEnabled="False" KeyDown="InputTextBox_KeyDown" />
+            <TextBox Grid.Column="0" x:Name="InputTextBox" PlaceholderText="Join a channel first, then type a message" IsEnabled="False" KeyDown="InputTextBox_KeyDown" />
             <Button Grid.Column="1" x:Name="SendButton" Content="Send" IsEnabled="False" Click="SendButton_Click" />
         </Grid>
 

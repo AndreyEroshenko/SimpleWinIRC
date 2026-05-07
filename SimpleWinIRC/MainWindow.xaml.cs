@@ -23,6 +23,7 @@ namespace SimpleWinIRC
         private StreamWriter? _writer;
         private CancellationTokenSource? _cts;
         private bool _isConnected;
+        private string? _currentChannel;
 
         public MainWindow()
         {
@@ -226,8 +227,10 @@ namespace SimpleWinIRC
                     if (_isConnected)
                     {
                         _isConnected = false;
+                        _currentChannel = null;
                         ConnectButton.Content = "Connect";
                         InputTextBox.IsEnabled = false;
+                        InputTextBox.PlaceholderText = string.Empty;
                         SendButton.IsEnabled = false;
                         ChannelTextBox.IsEnabled = false;
                         JoinButton.IsEnabled = false;
@@ -277,11 +280,13 @@ namespace SimpleWinIRC
                 _tcpClient = null;
                 _cts = null;
                 _isConnected = false;
+                _currentChannel = null;
                 _dispatcher.TryEnqueue(() =>
                 {
                     ConnectButton.Content = "Connect";
                     ConnectButton.IsEnabled = true;
                     InputTextBox.IsEnabled = false;
+                    InputTextBox.PlaceholderText = string.Empty;
                     SendButton.IsEnabled = false;
                     ChannelTextBox.IsEnabled = false;
                     JoinButton.IsEnabled = false;
@@ -312,7 +317,10 @@ namespace SimpleWinIRC
             var line = InputTextBox.Text?.Trim() ?? string.Empty;
             if (line.Length == 0) return;
             InputTextBox.Text = string.Empty;
-            await SendAsync(line);
+            if (!string.IsNullOrEmpty(_currentChannel))
+                await SendAsync($"PRIVMSG {_currentChannel} :{line}");
+            else
+                await SendAsync(line);
         }
 
         private async void JoinButton_Click(object sender, RoutedEventArgs e)
@@ -338,6 +346,8 @@ namespace SimpleWinIRC
                 channel = "#" + channel;
             ChannelTextBox.Text = string.Empty;
             await SendAsync($"JOIN {channel}");
+            _currentChannel = channel;
+            InputTextBox.PlaceholderText = $"Message {channel}";
         }
 
         private void AppendLine(string line)
