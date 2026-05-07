@@ -27,20 +27,39 @@ namespace SimpleWinIRC
         {
             InitializeComponent();
             _dispatcher = DispatcherQueue.GetForCurrentThread();
+            ServerComboBox.SelectedIndex = 0;
             Closed += (_, _) => _ = DisconnectAsync();
+        }
+
+        private void AdvancedOptionsCheckBox_Toggle(object sender, RoutedEventArgs e)
+        {
+            var visible = AdvancedOptionsCheckBox.IsChecked == true
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+            PortNumberBox.Visibility = visible;
+            UseSslCheckBox.Visibility = visible;
+            IgnoreCertCheckBox.Visibility = visible;
         }
 
         private void ServerComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            switch (ServerComboBox.SelectedItem as string)
+            var selected = ServerComboBox.SelectedItem as string;
+            if (selected == "<add new>")
+            {
+                ServerComboBox.Text = string.Empty;
+                return;
+            }
+            switch (selected)
             {
                 case "irc.irchighway.net":
                     PortNumberBox.Value = 9999;
                     UseSslCheckBox.IsChecked = true;
+                    IgnoreCertCheckBox.IsChecked = true;
                     break;
                 case "irc.undernet.org":
                     PortNumberBox.Value = 6667;
                     UseSslCheckBox.IsChecked = false;
+                    IgnoreCertCheckBox.IsChecked = false;
                     break;
             }
         }
@@ -63,6 +82,15 @@ namespace SimpleWinIRC
             {
                 SetStatus("Please enter a server and a nickname.");
                 return;
+            }
+
+            if (server != "<add new>" && !ServerComboBox.Items.Contains(server))
+            {
+                var addNewIndex = ServerComboBox.Items.IndexOf("<add new>");
+                if (addNewIndex >= 0)
+                    ServerComboBox.Items.Insert(addNewIndex, server);
+                else
+                    ServerComboBox.Items.Add(server);
             }
 
             ConnectButton.IsEnabled = false;
@@ -100,6 +128,9 @@ namespace SimpleWinIRC
                 SendButton.IsEnabled = true;
                 ChannelTextBox.IsEnabled = true;
                 JoinButton.IsEnabled = true;
+                ServerComboBox.IsEnabled = false;
+                NicknameTextBox.IsEnabled = false;
+                AdvancedOptionsCheckBox.IsEnabled = false;
                 SetStatus($"Connected to {server}:{port}.");
 
                 await SendAsync($"NICK {nickname}");
@@ -149,6 +180,9 @@ namespace SimpleWinIRC
                         SendButton.IsEnabled = false;
                         ChannelTextBox.IsEnabled = false;
                         JoinButton.IsEnabled = false;
+                        ServerComboBox.IsEnabled = true;
+                        NicknameTextBox.IsEnabled = true;
+                        AdvancedOptionsCheckBox.IsEnabled = true;
                         SetStatus("Disconnected.");
                     }
                 });
@@ -200,6 +234,9 @@ namespace SimpleWinIRC
                     SendButton.IsEnabled = false;
                     ChannelTextBox.IsEnabled = false;
                     JoinButton.IsEnabled = false;
+                    ServerComboBox.IsEnabled = true;
+                    NicknameTextBox.IsEnabled = true;
+                    AdvancedOptionsCheckBox.IsEnabled = true;
                 });
             }
         }

@@ -25,20 +25,22 @@
         <Grid Grid.Row="0" ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="2*" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <ComboBox Grid.Column="0" x:Name="ServerComboBox" Header="Server" IsEditable="True" Text="irc.irchighway.net" HorizontalAlignment="Stretch" SelectionChanged="ServerComboBox_SelectionChanged">
+            <ComboBox Grid.Column="0" x:Name="ServerComboBox" Header="Server" IsEditable="True" HorizontalAlignment="Stretch" VerticalAlignment="Bottom" SelectionChanged="ServerComboBox_SelectionChanged">
                 <x:String>irc.irchighway.net</x:String>
                 <x:String>irc.undernet.org</x:String>
+                <x:String>&lt;add new&gt;</x:String>
             </ComboBox>
-            <NumberBox Grid.Column="1" x:Name="PortNumberBox" Header="Port" Value="9999" Minimum="1" Maximum="65535" SpinButtonPlacementMode="Compact" />
-            <TextBox Grid.Column="2" x:Name="NicknameTextBox" Header="Nickname" PlaceholderText="your_nick" />
+            <NumberBox Grid.Column="1" x:Name="PortNumberBox" Header="Port" Value="9999" Minimum="1" Maximum="65535" SpinButtonPlacementMode="Compact" MinWidth="120" VerticalAlignment="Bottom" Visibility="Collapsed" />
+            <TextBox Grid.Column="2" x:Name="NicknameTextBox" Header="Nickname" PlaceholderText="your_nick" VerticalAlignment="Bottom" />
             <StackPanel Grid.Column="3" Orientation="Vertical" VerticalAlignment="Bottom" Margin="0,0,0,4">
-                <CheckBox x:Name="UseSslCheckBox" Content="SSL" IsChecked="True" />
-                <CheckBox x:Name="IgnoreCertCheckBox" Content="Ignore cert errors" />
+                <CheckBox x:Name="AdvancedOptionsCheckBox" Content="Advanced options" Checked="AdvancedOptionsCheckBox_Toggle" Unchecked="AdvancedOptionsCheckBox_Toggle" />
+                <CheckBox x:Name="UseSslCheckBox" Content="SSL" IsChecked="True" Visibility="Collapsed" />
+                <CheckBox x:Name="IgnoreCertCheckBox" Content="Ignore cert errors" Visibility="Collapsed" />
             </StackPanel>
             <Button Grid.Column="4" x:Name="ConnectButton" Content="Connect" Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Bottom" Click="ConnectButton_Click" />
         </Grid>
